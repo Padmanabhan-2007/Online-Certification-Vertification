@@ -1,90 +1,30 @@
 import { History, Search, Filter, Download, CheckCircle, XCircle, Calendar } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axios from "axios";
 
 export default function VerificationLogs() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
 
-  const logs = [
-    {
-      id: "VER001234",
-      certificateId: "CERT2026A123",
-      verificationDate: "2026-04-26",
-      verificationTime: "10:30 AM",
-      result: "Valid",
-      verifiedBy: "System",
-      ipAddress: "192.168.1.100",
-    },
-    {
-      id: "VER001233",
-      certificateId: "CERT2026A122",
-      verificationDate: "2026-04-26",
-      verificationTime: "09:15 AM",
-      result: "Valid",
-      verifiedBy: "System",
-      ipAddress: "192.168.1.101",
-    },
-    {
-      id: "VER001232",
-      certificateId: "CERT2026A121",
-      verificationDate: "2026-04-25",
-      verificationTime: "04:45 PM",
-      result: "Valid",
-      verifiedBy: "System",
-      ipAddress: "192.168.1.102",
-    },
-    {
-      id: "VER001231",
-      certificateId: "CERT2026A120",
-      verificationDate: "2026-04-25",
-      verificationTime: "02:20 PM",
-      result: "Valid",
-      verifiedBy: "System",
-      ipAddress: "192.168.1.103",
-    },
-    {
-      id: "VER001230",
-      certificateId: "CERT2026A119",
-      verificationDate: "2026-04-25",
-      verificationTime: "11:00 AM",
-      result: "Invalid",
-      verifiedBy: "System",
-      ipAddress: "192.168.1.104",
-    },
-    {
-      id: "VER001229",
-      certificateId: "CERT2026A118",
-      verificationDate: "2026-04-24",
-      verificationTime: "03:30 PM",
-      result: "Valid",
-      verifiedBy: "System",
-      ipAddress: "192.168.1.105",
-    },
-    {
-      id: "VER001228",
-      certificateId: "CERT2026A117",
-      verificationDate: "2026-04-24",
-      verificationTime: "01:15 PM",
-      result: "Invalid",
-      verifiedBy: "System",
-      ipAddress: "192.168.1.106",
-    },
-    {
-      id: "VER001227",
-      certificateId: "CERT2026A116",
-      verificationDate: "2026-04-24",
-      verificationTime: "10:00 AM",
-      result: "Valid",
-      verifiedBy: "System",
-      ipAddress: "192.168.1.107",
-    },
-  ];
+  const [logs, setLogs] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchLogs = async () => {
+      try {
+        const res = await axios.get("http://localhost:5000/api/verification-logs");
+        setLogs(res.data);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchLogs();
+  }, []);
 
   const filteredLogs = logs.filter((log) => {
     const matchesSearch =
-      log.certificateId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      log.id.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filterStatus === "all" || log.result.toLowerCase() === filterStatus;
+      (log.certificate_id || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (log.id?.toString() || "").toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesFilter = filterStatus === "all" || (log.result || "").toLowerCase() === filterStatus;
     return matchesSearch && matchesFilter;
   });
 
@@ -172,7 +112,7 @@ export default function VerificationLogs() {
             </div>
           </div>
           <p className="text-3xl font-bold text-blue-600">
-            {((logs.filter((l) => l.result === "Valid").length / logs.length) * 100).toFixed(1)}%
+            {logs.length > 0 ? ((logs.filter((l) => l.result === "Valid").length / logs.length) * 100).toFixed(1) : 0}%
           </p>
         </div>
       </div>
@@ -206,15 +146,15 @@ export default function VerificationLogs() {
               {filteredLogs.map((log) => (
                 <tr key={log.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="font-mono text-sm text-gray-900">{log.id}</span>
+                    <span className="font-mono text-sm text-gray-900">VER{log.id?.toString().padStart(6, '0')}</span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="font-mono text-sm font-medium text-blue-600">{log.certificateId}</span>
+                    <span className="font-mono text-sm font-medium text-blue-600">{log.certificate_id}</span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div>
-                      <p className="text-sm text-gray-900">{log.verificationDate}</p>
-                      <p className="text-xs text-gray-600">{log.verificationTime}</p>
+                      <p className="text-sm text-gray-900">{new Date(log.verification_date).toLocaleDateString()}</p>
+                      <p className="text-xs text-gray-600">{new Date(log.verification_date).toLocaleTimeString()}</p>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -233,9 +173,9 @@ export default function VerificationLogs() {
                       {log.result}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{log.verifiedBy}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{log.verified_by}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="font-mono text-sm text-gray-600">{log.ipAddress}</span>
+                    <span className="font-mono text-sm text-gray-600">{log.ip_address}</span>
                   </td>
                 </tr>
               ))}

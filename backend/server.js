@@ -48,11 +48,30 @@ app.get('/api/certificates', (req, res) => {
 // Fetch Single Certificate by ID (For Verification)
 app.get('/api/certificates/:id', (req, res) => {
     const { id } = req.params;
+    const ip = req.ip || req.socket.remoteAddress;
+    
     const sql = "SELECT certificate_id, student_name, course_name, issue_date FROM certificates WHERE certificate_id = ?";
     db.query(sql, [id], (err, results) => {
         if (err) return res.status(500).json({ error: "Database error" });
-        if (results.length === 0) return res.status(404).json({ error: "Certificate not found" });
+        
+        const isValid = results.length > 0;
+        const resultText = isValid ? 'Valid' : 'Invalid';
+        
+        // Log the verification attempt
+        const logSql = "INSERT INTO verification_logs (certificate_id, result, verified_by, ip_address) VALUES (?, ?, ?, ?)";
+        db.query(logSql, [id, resultText, 'System', ip]);
+        
+        if (!isValid) return res.status(404).json({ error: "Certificate not found" });
         res.json(results[0]);
+    });
+});
+
+// Fetch Verification Logs
+app.get('/api/verification-logs', (req, res) => {
+    const sql = "SELECT * FROM verification_logs ORDER BY verification_date DESC";
+    db.query(sql, (err, results) => {
+        if (err) return res.status(500).json({ error: "Database error" });
+        res.json(results);
     });
 });
 
