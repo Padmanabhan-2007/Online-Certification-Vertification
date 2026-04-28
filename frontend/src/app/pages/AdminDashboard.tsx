@@ -16,9 +16,9 @@ export default function AdminDashboard() {
         const statsRes = await axios.get("http://localhost:5000/api/stats");
         setTotalStudents(statsRes.data.totalStudents);
 
-        // Fetch recent activities (Note: You'll create this API route next!)
-        // const activityRes = await axios.get("http://localhost:5000/api/activities");
-        // setActivities(activityRes.data);
+        // Fetch recent activities (Using certificates endpoint)
+        const activityRes = await axios.get("http://localhost:5000/api/certificates");
+        setActivities(activityRes.data);
 
         setLoading(false);
       } catch (error) {
@@ -136,23 +136,19 @@ export default function AdminDashboard() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {/* For now, we use your original dummy data, but logic is ready for state */}
-                {[
-                    { id: 1, type: "issued", certificate: "CERT2026A123", student: "John Doe", course: "Computer Science", date: "2026-04-26", time: "10:30 AM" }
-                ].map((activity) => (
-                  <tr key={activity.id} className="hover:bg-gray-50 transition-colors">
+                {activities.slice().reverse().map((activity: any, index: number) => (
+                  <tr key={activity.certificate_id || index} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(activity.type)}`}>
-                        {activity.type.charAt(0).toUpperCase() + activity.type.slice(1)}
+                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor('issued')}`}>
+                        Issued
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{activity.certificate}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{activity.student}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{activity.course}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{activity.certificate_id}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{activity.student_name}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{activity.course_name}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                       <div>
-                        <p>{activity.date}</p>
-                        <p className="text-xs text-gray-500">{activity.time}</p>
+                        <p>{new Date(activity.issue_date).toLocaleDateString()}</p>
                       </div>
                     </td>
                   </tr>

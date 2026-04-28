@@ -1,5 +1,6 @@
 import { FileText, CheckCircle } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axios from "axios";
 
 export default function CertificateIssuing() {
   const [formData, setFormData] = useState({
@@ -12,20 +13,47 @@ export default function CertificateIssuing() {
   });
   const [submitted, setSubmitted] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [recentCerts, setRecentCerts] = useState<any[]>([]);
+
+  const fetchRecent = async () => {
+    try {
+      const res = await axios.get("http://localhost:5000/api/certificates");
+      setRecentCerts(res.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    fetchRecent();
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
-    setTimeout(() => {
-      setSubmitted(false);
-      setFormData({
-        certificateId: "",
-        courseName: "",
-        issueDate: "",
-        status: "Valid",
-        studentId: "",
-        issuerId: "",
+    try {
+      await axios.post("http://localhost:5000/api/issue-certificate", {
+        certificate_id: formData.certificateId,
+        student_name: formData.studentId, // Storing studentId in student_name field as per UI
+        course_name: formData.courseName,
+        issue_date: formData.issueDate
       });
-    }, 3000);
+      setSubmitted(true);
+      fetchRecent(); // refresh the list
+      setTimeout(() => {
+        setSubmitted(false);
+        setFormData({
+          certificateId: "",
+          courseName: "",
+          issueDate: "",
+          status: "Valid",
+          studentId: "",
+          issuerId: "",
+        });
+      }, 3000);
+    } catch (error) {
+      console.error(error);
+      alert("Failed to issue certificate.");
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -193,20 +221,16 @@ export default function CertificateIssuing() {
       <div className="mt-6 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl border border-indigo-200 p-6">
         <h3 className="font-semibold text-gray-900 mb-3">Recently Issued Certificates</h3>
         <div className="space-y-3">
-          {[
-            { id: "CERT2026A123", course: "Computer Science", student: "John Doe", date: "2026-04-26" },
-            { id: "CERT2026A122", course: "Data Science", student: "Jane Smith", date: "2026-04-26" },
-            { id: "CERT2026A121", course: "Software Engineering", student: "Mike Johnson", date: "2026-04-25" },
-          ].map((cert) => (
-            <div key={cert.id} className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-200">
+          {recentCerts.slice().reverse().slice(0, 5).map((cert: any, index: number) => (
+            <div key={cert.certificate_id || index} className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-200">
               <div>
-                <p className="font-medium text-gray-900">{cert.id}</p>
+                <p className="font-medium text-gray-900">{cert.certificate_id}</p>
                 <p className="text-sm text-gray-600">
-                  {cert.student} - {cert.course}
+                  {cert.student_name} - {cert.course_name}
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-sm text-gray-600">{cert.date}</p>
+                <p className="text-sm text-gray-600">{new Date(cert.issue_date).toLocaleDateString()}</p>
                 <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full mt-1">
                   <CheckCircle className="w-3 h-3" />
                   Valid

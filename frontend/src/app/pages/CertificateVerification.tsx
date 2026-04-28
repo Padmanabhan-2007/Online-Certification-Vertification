@@ -1,29 +1,37 @@
 import { Link } from "react-router-dom";
 import { Shield, ArrowLeft, Search, CheckCircle, XCircle, Award, Calendar, User, Building } from "lucide-react";
 import { useState } from "react";
+import axios from "axios";
 
 export default function CertificateVerification() {
   const [certificateId, setCertificateId] = useState("");
   const [verificationResult, setVerificationResult] = useState<any>(null);
   const [isVerifying, setIsVerifying] = useState(false);
 
-  const handleVerify = (e: React.FormEvent) => {
+  const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsVerifying(true);
+    setVerificationResult(null);
 
-    setTimeout(() => {
-      const mockResult = {
-        status: certificateId.length > 5 ? "valid" : "invalid",
-        certificateId: certificateId,
-        studentName: "John Doe",
-        courseName: "Bachelor of Computer Science",
-        issueDate: "2025-12-15",
-        issuerName: "University of Technology",
+    try {
+      const res = await axios.get(`http://localhost:5000/api/certificates/${certificateId}`);
+      const data = res.data;
+      setVerificationResult({
+        status: "valid",
+        certificateId: data.certificate_id,
+        studentName: data.student_name,
+        courseName: data.course_name,
+        issueDate: data.issue_date,
+        issuerName: "CertifySecure Platform",
         issuerVerified: true,
-      };
-      setVerificationResult(mockResult);
+      });
+    } catch (error) {
+      setVerificationResult({
+        status: "invalid",
+      });
+    } finally {
       setIsVerifying(false);
-    }, 1500);
+    }
   };
 
   return (
