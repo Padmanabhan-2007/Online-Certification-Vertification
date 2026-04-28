@@ -1,6 +1,7 @@
 import { Link } from "react-router";
 import { Shield, ArrowLeft, UserPlus } from "lucide-react";
 import { useState } from "react";
+import axios from "axios";
 
 export default function StudentRegistration() {
   const [formData, setFormData] = useState({
@@ -11,10 +12,23 @@ export default function StudentRegistration() {
   });
   const [submitted, setSubmitted] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
-    setTimeout(() => setSubmitted(false), 3000);
+    
+    try {
+      const res = await axios.post("http://localhost:5000/api/students", formData);
+      setSubmitted(true);
+      setTimeout(() => setSubmitted(false), 3000);
+      setFormData({
+        studentId: "",
+        fullName: "",
+        email: "",
+        dateOfBirth: "",
+      });
+    } catch (err) {
+      console.error(err);
+      alert("Failed to register student.");
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
