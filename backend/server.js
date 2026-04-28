@@ -12,13 +12,15 @@ const db = mysql.createPool({
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME
+    database: process.env.DB_NAME,
+    socketPath: '/tmp/mysql.sock'
 });
 
 // Test Connection
 db.getConnection((err, connection) => {
     if (err) {
-        console.error("Database connection failed: " + err.message);
+        console.error("Database connection failed:");
+        console.error(err);
     } else {
         console.log("Connected to MySQL Database!");
         connection.release();
@@ -56,6 +58,7 @@ app.get('/api/certificates/:id', (req, res) => {
 
 // Issue New Certificate
 app.post('/api/issue-certificate', (req, res) => {
+    console.log("Received request body:", req.body);
     const { certificate_id, student_name, course_name, issue_date } = req.body;
     const sql = "INSERT INTO certificates (certificate_id, student_name, course_name, issue_date) VALUES (?, ?, ?, ?)";
     
